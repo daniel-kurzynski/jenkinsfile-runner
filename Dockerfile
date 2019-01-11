@@ -10,6 +10,7 @@ ADD bootstrap/pom.xml /src/bootstrap/pom.xml
 ADD setup/pom.xml /src/setup/pom.xml
 ADD payload/pom.xml /src/payload/pom.xml
 ADD payload-dependencies/pom.xml /src/payload-dependencies/pom.xml
+ADD test/pom.xml /src/test/pom.xml
 
 WORKDIR /src
 ENV MAVEN_OPTS=-Dmaven.repo.local=/mavenrepo
@@ -21,12 +22,13 @@ COPY --from=jenkinsfilerunner-mvncache /mavenrepo /mavenrepo
 ADD . /jenkinsfile-runner
 RUN cd /jenkinsfile-runner && mvn package
 
-FROM jenkins/jenkins:${JENKINS_VERSION}
+FROM s4sdk/jenkins-master
 USER root
 RUN mkdir /app && unzip /usr/share/jenkins/jenkins.war -d /app/jenkins
-COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+#COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 COPY --from=jenkinsfilerunner-build /jenkinsfile-runner/app/target/appassembler /app
+VOLUME ["/tmp"]
 
 ENTRYPOINT ["/app/bin/jenkinsfile-runner", \
             "-w", "/app/jenkins",\
